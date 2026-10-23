@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "ESNext", "moduleResolution": "Bundler",
+    "strict": true, "noUncheckedIndexedAccess": true, "esModuleInterop": true,
+    "resolveJsonModule": true, "jsx": "react-jsx", "skipLibCheck": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["node", "vite/client"],
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["packages", "tests", "vitest.config.ts"]
+}

@@ -1,0 +1,10 @@
+node_modules/
+**/dist/
+coverage/
+.env*
+backups/*
+reports/*
+logs/*
+data/*
+!.gitkeep
+*.tsbuildinfo
