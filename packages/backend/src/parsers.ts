@@ -42,7 +42,7 @@ export function parseMemory(output: string): { totalKiB: number; availableKiB: n
 }
 export function parseStorage(output: string): { totalKiB: number; availableKiB: number } {
   const lines = output.trim().split(/\r?\n/);
-  if (!/Filesystem/i.test(lines[0] ?? '')) throw new Error('Thiếu tiêu đề df.');
+  if (!/Filesystem/i.test(lines[0] ?? '') || !/\b(?:1K-blocks|1024-blocks)\b/i.test(lines[0] ?? '')) throw new Error('Thiếu tiêu đề df theo đơn vị khối 1 KiB.');
   const row = lines.slice(1).find(line => /\s\/data\s*$/.test(line));
   const match = row && /^\S+\s+(\d+)\s+(\d+)\s+(\d+)\s+\d+%\s+\/data\s*$/.exec(row);
   if (!match) throw new Error('df -k /data không đúng định dạng được hỗ trợ.');

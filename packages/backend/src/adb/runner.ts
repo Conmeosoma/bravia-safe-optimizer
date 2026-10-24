@@ -11,10 +11,13 @@ export class RealRunner implements Runner {
     const args = commandArgs(command);
     if (!validAdbPath(this.executable)) fail('INVALID');
     try { await access(this.executable); } catch { fail('ADB_MISSING'); }
+    const environment = { ...process.env };
+    delete environment.ANDROID_ADB_SERVER_ADDRESS;
+    delete environment.ANDROID_ADB_SERVER_PORT;
     return new Promise((resolve, reject) => {
       const child = spawn(this.executable, args, {
         shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
-        env: { ...process.env, ADB_SERVER_SOCKET: 'tcp:127.0.0.1:5037', ANDROID_ADB_SERVER_ADDRESS: '127.0.0.1', ANDROID_ADB_SERVER_PORT: '5037' }
+        env: { ...environment, ADB_SERVER_SOCKET: 'tcp:5037' }
       });
       let stdout = ''; let stderr = ''; let size = 0; let settled = false;
       const finish = (error?: Error, result?: AdbResult) => {
@@ -25,15 +28,16 @@ export class RealRunner implements Runner {
       const timer = setTimeout(() => {
         child.kill(); finish(new AppError('TIMEOUT', errorMessages.TIMEOUT));
       }, this.timeoutMs);
-      const collect = (chunk: Buffer, stream: 'stdout' | 'stderr') => {
-        size += chunk.length;
+      const collect = (chunk: string, stream: 'stdout' | 'stderr') => {
+        size += Buffer.byteLength(chunk, 'utf8');
         if (size > 4 * 1024 * 1024) {
           child.kill(); finish(new AppError('COMMAND_FAILED', 'Đầu ra vượt giới hạn an toàn; đã dừng đọc.')); return;
         }
-        if (stream === 'stdout') stdout += chunk.toString('utf8'); else stderr += chunk.toString('utf8');
+        if (stream === 'stdout') stdout += chunk; else stderr += chunk;
       };
-      child.stdout.on('data', (chunk: Buffer) => collect(chunk, 'stdout'));
-      child.stderr.on('data', (chunk: Buffer) => collect(chunk, 'stderr'));
+      child.stdout.setEncoding('utf8'); child.stderr.setEncoding('utf8');
+      child.stdout.on('data', (chunk: string) => collect(chunk, 'stdout'));
+      child.stderr.on('data', (chunk: string) => collect(chunk, 'stderr'));
       child.on('error', () => finish(new AppError('ADB_MISSING', errorMessages.ADB_MISSING)));
       child.on('close', code => finish(undefined, { stdout, stderr, exitCode: code ?? -1 }));
     });

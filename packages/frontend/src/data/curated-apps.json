@@ -1,0 +1,5 @@
+[
+  { "id": "vtvgo", "packageName": "vn.vtv.vtvgotv", "source": "https://play.google.com/store/apps/details?id=vn.vtv.vtvgotv", "checkedOn": "2026-10-23" },
+  { "id": "youtube", "packageName": "com.google.android.youtube.tv", "source": "https://play.google.com/store/apps/details?id=com.google.android.youtube.tv", "checkedOn": "2026-10-23" },
+  { "id": "netflix", "packageName": "com.netflix.ninja", "source": "https://play.google.com/store/apps/details?id=com.netflix.ninja", "checkedOn": "2026-10-23" }
+]

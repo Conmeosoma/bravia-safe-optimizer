@@ -70,7 +70,7 @@ export const deviceTemplates = {
   disabled: ['shell', 'pm', 'list', 'packages', '-d']
 } as const;
 export type DeviceCommand = keyof typeof properties | keyof typeof deviceTemplates;
-export type AdbCommand = { kind: 'version' | 'devices' } | { kind: 'read'; serial: string; command: DeviceCommand };
+export type AdbCommand = { kind: 'version' } | { kind: 'devices' } | { kind: 'read'; serial: string; command: DeviceCommand };
 export function commandArgs(command: AdbCommand): string[] {
   if (command.kind === 'version') return ['version'];
   if (command.kind === 'devices') return ['devices', '-l'];
