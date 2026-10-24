@@ -1,0 +1,299 @@
+diff --git a/smarttubetv/build.gradle b/smarttubetv/build.gradle
+index 3664bfd..34f9ad7 100644
+--- a/smarttubetv/build.gradle
++++ b/smarttubetv/build.gradle
+@@ -24,6 +24,8 @@ buildscript {
+ 
+ apply plugin: 'com.android.application'
+ 
++def localTvUi = providers.gradleProperty('localTvUi').map { it.toBoolean() }.getOrElse(false)
++
+ def keystorePropertiesFile = rootProject.file("keystore.properties")
+ def keystoreProperties = new Properties()
+ if (keystorePropertiesFile.exists()) {
+@@ -61,6 +63,7 @@ android {
+         versionName "32.68"
+         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
++        buildConfigField 'boolean', 'LOCAL_TV_UI', 'false'
+ 
+         // More info: http://myhexaville.com/2017/03/10/android-multidex/
+         // Additionally, you should extend your application from MultiDexApplication
+@@ -168,7 +171,11 @@ android {
+             targetSdkVersion project.properties.compileSdkVersion
+         }
+         stfdroid {
+-            applicationId "app.smarttube.fdroid"
++            applicationId localTvUi ? 'app.bravia.smarttube.ui' : 'app.smarttube.fdroid'
++            if (localTvUi) {
++                versionNameSuffix '-bravia-ui1'
++                buildConfigField 'boolean', 'LOCAL_TV_UI', 'true'
++            }
+             minSdkVersion 21
+             targetSdkVersion project.properties.compileSdkVersion
+ 
+@@ -178,6 +185,7 @@ android {
+             }
+         }
+     }
++
+ }
+ 
+ dependencies {
+diff --git a/smarttubetv/src/main/java/com/liskovsoft/smartyoutubetv2/tv/presenter/IconHeaderItemPresenter.java b/smarttubetv/src/main/java/com/liskovsoft/smartyoutubetv2/tv/presenter/IconHeaderItemPresenter.java
+index 4de27ee..25ef146 100644
+--- a/smarttubetv/src/main/java/com/liskovsoft/smartyoutubetv2/tv/presenter/IconHeaderItemPresenter.java
++++ b/smarttubetv/src/main/java/com/liskovsoft/smartyoutubetv2/tv/presenter/IconHeaderItemPresenter.java
+@@ -22,6 +22,7 @@ import com.bumptech.glide.request.RequestListener;
+ import com.bumptech.glide.request.target.Target;
+ import com.liskovsoft.sharedutils.mylogger.Log;
+ import com.liskovsoft.smartyoutubetv2.tv.R;
++import com.liskovsoft.smartyoutubetv2.tv.BuildConfig;
+ import com.liskovsoft.smartyoutubetv2.tv.util.ViewUtil;
+ 
+ public class IconHeaderItemPresenter extends RowHeaderPresenter {
+@@ -94,6 +95,11 @@ public class IconHeaderItemPresenter extends RowHeaderPresenter {
+     // mUnselectAlpha, and also assumes the xml inflation will return a RowHeaderView.
+     @Override
+     protected void onSelectLevelChanged(RowHeaderPresenter.ViewHolder holder) {
++        if (BuildConfig.LOCAL_TV_UI) {
++            holder.view.setActivated(holder.getSelectLevel() > 0.5f);
++            holder.view.setAlpha(1.0f);
++            return;
++        }
+         holder.view.setAlpha(mUnselectedAlpha + holder.getSelectLevel() *
+                 (1.0f - mUnselectedAlpha));
+     }
+diff --git a/smarttubetv/src/main/java/com/liskovsoft/smartyoutubetv2/tv/presenter/VideoCardPresenter.java b/smarttubetv/src/main/java/com/liskovsoft/smartyoutubetv2/tv/presenter/VideoCardPresenter.java
+index 686ad7b..896f789 100644
+--- a/smarttubetv/src/main/java/com/liskovsoft/smartyoutubetv2/tv/presenter/VideoCardPresenter.java
++++ b/smarttubetv/src/main/java/com/liskovsoft/smartyoutubetv2/tv/presenter/VideoCardPresenter.java
+@@ -24,6 +24,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
+ import com.liskovsoft.smartyoutubetv2.common.prefs.MainUIData;
+ import com.liskovsoft.smartyoutubetv2.common.utils.ClickbaitRemover;
+ import com.liskovsoft.smartyoutubetv2.tv.R;
++import com.liskovsoft.smartyoutubetv2.tv.BuildConfig;
+ import com.liskovsoft.smartyoutubetv2.tv.presenter.base.LongClickPresenter;
+ import com.liskovsoft.smartyoutubetv2.tv.ui.browse.video.GridFragmentHelper;
+ import com.liskovsoft.smartyoutubetv2.tv.ui.widgets.complexcardview.ComplexImageCardView;
+@@ -72,6 +73,9 @@ public class VideoCardPresenter extends LongClickPresenter {
+             public void setSelected(boolean selected) {
+                 updateCardBackgroundColor(this, selected);
+                 super.setSelected(selected);
++                if (BuildConfig.LOCAL_TV_UI) {
++                    getMainImageView().setSelected(selected);
++                }
+             }
+         };
+ 
+@@ -81,6 +85,10 @@ public class VideoCardPresenter extends LongClickPresenter {
+         cardView.setTextScrollSpeed(cardTextScrollSpeed);
+         cardView.setFocusable(true);
+         cardView.setFocusableInTouchMode(true);
++        if (BuildConfig.LOCAL_TV_UI && VERSION.SDK_INT >= 23) {
++            cardView.getMainImageView().setForeground(
++                    ContextCompat.getDrawable(context, R.drawable.tv_thumbnail_focus));
++        }
+         cardView.enableBadge(isBadgeEnabled());
+         cardView.enableTitle(isTitleEnabled());
+         cardView.enableContent(isContentEnabled());
+@@ -112,7 +120,7 @@ public class VideoCardPresenter extends LongClickPresenter {
+         }
+         TextView contentText = view.findViewById(R.id.content_text);
+         if (contentText != null) {
+-            contentText.setTextColor(textColor);
++            contentText.setTextColor(BuildConfig.LOCAL_TV_UI && !selected ? 0xFFAAAAAA : textColor);
+         }
+     }
+ 
+diff --git a/smarttubetv/src/main/res/drawable/tv_thumbnail_focus.xml b/smarttubetv/src/main/res/drawable/tv_thumbnail_focus.xml
+new file mode 100644
+index 0000000..89b4019
+--- /dev/null
++++ b/smarttubetv/src/main/res/drawable/tv_thumbnail_focus.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_selected="true">
++        <shape>
++            <solid android:color="@android:color/transparent" />
++            <stroke android:width="3dp" android:color="#F1F1F1" />
++            <corners android:radius="10dp" />
++        </shape>
++    </item>
++    <item><shape><solid android:color="@android:color/transparent" /></shape></item>
++</selector>
+diff --git a/smarttubetv/src/stfdroid/res/color/tv_nav_foreground.xml b/smarttubetv/src/stfdroid/res/color/tv_nav_foreground.xml
+new file mode 100644
+index 0000000..5c90ba5
+--- /dev/null
++++ b/smarttubetv/src/stfdroid/res/color/tv_nav_foreground.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_focused="true" android:color="#0F0F0F" />
++    <item android:color="#F1F1F1" />
++</selector>
+diff --git a/smarttubetv/src/stfdroid/res/drawable/tv_nav_background.xml b/smarttubetv/src/stfdroid/res/drawable/tv_nav_background.xml
+new file mode 100644
+index 0000000..f6f6fc9
+--- /dev/null
++++ b/smarttubetv/src/stfdroid/res/drawable/tv_nav_background.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++    <item android:state_focused="true">
++        <shape><solid android:color="#F1F1F1" /><corners android:radius="24dp" /></shape>
++    </item>
++    <item android:state_activated="true">
++        <shape><solid android:color="#272727" /><corners android:radius="24dp" /></shape>
++    </item>
++    <item><shape><solid android:color="@android:color/transparent" /></shape></item>
++</selector>
+diff --git a/smarttubetv/src/stfdroid/res/layout/icon_header_item.xml b/smarttubetv/src/stfdroid/res/layout/icon_header_item.xml
+new file mode 100644
+index 0000000..3bf6591
+--- /dev/null
++++ b/smarttubetv/src/stfdroid/res/layout/icon_header_item.xml
+@@ -0,0 +1,34 @@
++<?xml version="1.0" encoding="utf-8"?>
++<androidx.leanback.widget.NonOverlappingLinearLayout
++    xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="48dp"
++    android:minHeight="48dp"
++    android:orientation="horizontal"
++    android:gravity="center_vertical"
++    android:paddingStart="16dp"
++    android:paddingEnd="16dp"
++    android:background="@drawable/tv_nav_background">
++
++    <ImageView
++        android:id="@+id/header_icon"
++        android:layout_width="24dp"
++        android:layout_height="24dp"
++        android:duplicateParentState="true"
++        android:tint="@color/tv_nav_foreground"
++        android:contentDescription="@null" />
++
++    <com.liskovsoft.smartyoutubetv2.tv.ui.widgets.marqueetextviewcompat.HeaderMarqueeTextViewCompat
++        android:id="@+id/header_label"
++        style="@style/TextAppearance.Leanback.Header"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:layout_marginStart="20dp"
++        android:duplicateParentState="true"
++        android:fontFamily="sans-serif-medium"
++        android:textColor="@color/tv_nav_foreground"
++        android:textSize="16sp"
++        android:singleLine="true"
++        android:maxWidth="150sp"
++        android:ellipsize="end" />
++</androidx.leanback.widget.NonOverlappingLinearLayout>
+diff --git a/smarttubetv/src/stfdroid/res/layout/lb_image_card_view_themed_content.xml b/smarttubetv/src/stfdroid/res/layout/lb_image_card_view_themed_content.xml
+new file mode 100644
+index 0000000..443e0f3
+--- /dev/null
++++ b/smarttubetv/src/stfdroid/res/layout/lb_image_card_view_themed_content.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     Copyright (C) 2014 The Android Open Source Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<com.liskovsoft.smartyoutubetv2.tv.ui.widgets.marqueetextviewcompat.MarqueeTextViewCompat xmlns:android="http://schemas.android.com/apk/res/android"
++                                                                              android:fontFamily="sans-serif"
++                                                                              android:id="@+id/content_text"
++                                                                              style="?attr/imageCardViewContentStyle" />
+diff --git a/smarttubetv/src/stfdroid/res/layout/lb_image_card_view_themed_title.xml b/smarttubetv/src/stfdroid/res/layout/lb_image_card_view_themed_title.xml
+new file mode 100644
+index 0000000..01a3c73
+--- /dev/null
++++ b/smarttubetv/src/stfdroid/res/layout/lb_image_card_view_themed_title.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     Copyright (C) 2014 The Android Open Source Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<com.liskovsoft.smartyoutubetv2.tv.ui.widgets.marqueetextviewcompat.MarqueeTextViewCompat xmlns:android="http://schemas.android.com/apk/res/android"
++                                                                              android:fontFamily="sans-serif"
++                                                                              android:id="@+id/title_text"
++                                                                              style="?attr/imageCardViewTitleStyle" />
+diff --git a/smarttubetv/src/stfdroid/res/values/strings.xml b/smarttubetv/src/stfdroid/res/values/strings.xml
+index d5bcc69..ce0ba6d 100644
+--- a/smarttubetv/src/stfdroid/res/values/strings.xml
++++ b/smarttubetv/src/stfdroid/res/values/strings.xml
+@@ -1,5 +1,5 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <string translatable="false" name="app_name"><![CDATA[SmartTube F-Droid]]></string>
+-    <string translatable="false" name="browse_title"><![CDATA[SmartTube F-Droid]]></string>
++    <string translatable="false" name="app_name"><![CDATA[SmartTube BRAVIA]]></string>
++    <string translatable="false" name="browse_title"><![CDATA[SmartTube BRAVIA]]></string>
+ </resources>
+diff --git a/smarttubetv/src/stfdroid/res/values/tv_ui.xml b/smarttubetv/src/stfdroid/res/values/tv_ui.xml
+new file mode 100644
+index 0000000..40b802d
+--- /dev/null
++++ b/smarttubetv/src/stfdroid/res/values/tv_ui.xml
+@@ -0,0 +1,35 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <!-- Neutral TV surfaces keep thumbnails and remote focus visually distinct. -->
++    <color name="scheme_grey_background">#0F0F0F</color>
++    <color name="scheme_grey_background_dark">#0F0F0F</color>
++    <color name="scheme_grey_shelf_background_dark">#0F0F0F</color>
++    <color name="scheme_grey_card_background_dark">#0F0F0F</color>
++    <color name="card_selected_background_white">#272727</color>
++    <color name="card_selected_text_grey">#F1F1F1</color>
++    <color name="card_default_text">#F1F1F1</color>
++    <color name="semi_red">#FF0033</color>
++    <color name="red">#FF0033</color>
++
++    <dimen name="card_width">200dp</dimen>
++    <dimen name="card_height">112.5dp</dimen>
++    <dimen name="grid_item_horizontal_spacing">18dp</dimen>
++    <dimen name="grid_item_vertical_spacing">24dp</dimen>
++    <dimen name="browse_headers_vertical_spacing">6dp</dimen>
++    <dimen name="lb_rounded_rect_corner_radius">10dp</dimen>
++    <dimen name="lb_basic_card_info_height">64dp</dimen>
++    <dimen name="lb_basic_card_info_padding">8dp</dimen>
++    <dimen name="lb_basic_card_title_text_size">16sp</dimen>
++    <dimen name="lb_basic_card_content_text_size">12sp</dimen>
++
++    <style name="App.Theme.DarkGrey.Browse" parent="App.Theme.Leanback.Browse">
++        <item name="android:windowBackground">@color/scheme_grey_shelf_background_dark</item>
++        <item name="brandColor">@color/scheme_grey_background_dark</item>
++        <item name="brandAccentColor">@color/semi_red</item>
++        <item name="cardProgressStyle">@style/ProgressBarHorizontal.Dark</item>
++        <item name="shelfBackground">@color/scheme_grey_shelf_background_dark</item>
++        <item name="cardDefaultBackground">@color/scheme_grey_card_background_dark</item>
++        <item name="appLogo">@null</item>
++        <item name="android:fontFamily">sans-serif</item>
++    </style>
++</resources>

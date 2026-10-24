@@ -1,0 +1,6 @@
+[submodule "cleanyourtv"]
+	path = cleanyourtv
+	url = https://github.com/Conmeosoma/cleanyourtv.git
+[submodule "smarttube"]
+	path = smarttube
+	url = https://github.com/yuliskov/SmartTube.git

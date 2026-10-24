@@ -1,0 +1,2 @@
+# Preserve patch syntax and line endings on Windows.
+docs/*.patch text eol=lf -whitespace

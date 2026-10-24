@@ -1,0 +1,68 @@
+diff --git a/launcher/app/src/main/res/values/config.xml b/launcher/app/src/main/res/values/config.xml
+index f600b7d6..b1897ccc 100644
+--- a/launcher/app/src/main/res/values/config.xml
++++ b/launcher/app/src/main/res/values/config.xml
+@@ -17,15 +17,14 @@
+ 
+     <!-- Apps pinned to the dock row at the bottom, in this order. Missing apps are skipped. -->
+     <string-array name="dock_apps">
+-        <item>com.netflix.ninja</item>
+-        <item>com.amazon.amazonvideo.livingroom</item>
++        <item>vn.vtv.vtvgotv</item>
+         <item>com.google.android.youtube.tv</item>
+-        <item>in.startv.hotstar</item>
++        <item>com.netflix.ninja</item>
+     </string-array>
+     <!-- With fewer dock_apps than columns (or a dock app that is not installed), the free dock slots take
+          the first grid apps, so the dock never shows a gap. false leaves them empty (#162); a theme can
+          set "fill_dock": false. -->
+-    <bool name="fill_dock">true</bool>
++    <bool name="fill_dock">false</bool>
+ 
+     <!-- Apps never shown as tiles (e.g. the Live TV app, which the Inputs menu already covers). -->
+     <string-array name="hidden_apps">
+@@ -205,7 +204,7 @@
+     <!-- The dock band as light frosted glass, like the Inputs, Wi-Fi and Settings pills, so a sky or wallpaper shows
+          through it. false (the default) keeps the solid near-black band, or the cinematic shelf's dark glass. Can
+          also be set with "dock_glass": true in a theme's config.json. -->
+-    <bool name="dock_glass">false</bool>
++    <bool name="dock_glass">true</bool>
+     <!-- The dock band's padding equals the gap between its tiles on all four sides (as far as the grid's edges leave room),
+          so its corners are concentric with the tiles' and the spacing reads even. false (the default) keeps the fixed
+          14dp above and below, up to 22dp at the sides and 26dp corners. Can also be set with "dock_even_padding": true in a theme's config.json. -->
+@@ -266,7 +265,7 @@
+ 
+     <!-- Tiles per row in the grid; the dock always has this many slots. Tiles are 180dp wide at 4 columns and
+          shrink to fit from 5 up (about 144dp at 5, 117dp at 6 on a 1080p TV). -->
+-    <integer name="columns">4</integer>
++    <integer name="columns">3</integer>
+ 
+     <!-- Basic motion is on; advanced effects are opt-in in the launcher's own Settings screen. -->
+     <bool name="animations">true</bool>
+@@ -305,7 +304,7 @@
+          before settling. false: both go straight there, with no bounce, while scrolling stays smooth
+          (reduced_motion also removes the overshoot, but scrolls in one jump). Can also be set with
+          "focus_overshoot" in a theme's config.json. -->
+-    <bool name="focus_overshoot">true</bool>
++    <bool name="focus_overshoot">false</bool>
+ 
+     <!-- One line under the clock: CPU, free memory and free storage. Off by default; a theme can set
+          "show_stats": true. Nothing is read, and the clock does not move, while this is false. -->
+@@ -326,7 +325,7 @@
+          colour; the shelf gets a larger name, a "Last opened" line (from the apps Home opened) and dock position
+          dots, the focus glow takes the app's colour and the dock band turns translucent. false keeps the plain
+          shelf. Can also be set with "cinematic_home": true in a theme's config.json. -->
+-    <bool name="cinematic_home">false</bool>
++    <bool name="cinematic_home">true</bool>
+     <!-- With cinematic_home, false leaves out the dock position dots under the app's name, for a quieter shelf. Can
+          also be set with "cinematic_dots": false in a theme's config.json. -->
+     <bool name="cinematic_dots">true</bool>
+@@ -347,7 +346,7 @@
+     <bool name="ambient_glow">true</bool>
+     <!-- The focus highlight glows in the focused app's colour on every tile, as the cinematic shelf does for the
+          dock, without cinematic_home. Can also be set with "app_glow": true in a theme's config.json. -->
+-    <bool name="app_glow">false</bool>
++    <bool name="app_glow">true</bool>
+     <!-- The rows fade out as they scroll up under the clock, instead of being cut off at a hard line (TopFade).
+          The grid then draws into a hardware layer, about 6 MB of graphics memory at 1080p, so it is off by default.
+          Can also be set with "fade_rows": true in a theme's config.json. -->

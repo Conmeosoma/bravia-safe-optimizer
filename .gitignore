@@ -10,3 +10,7 @@ logs/*
 data/*
 !.gitkeep
 *.tsbuildinfo
+*.apk
+*.aab
+*.jks
+*.keystore
